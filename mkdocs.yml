@@ -1,0 +1,19 @@
+site_name: Quarkus based event driven microservice using Kafka 
+repo_url: https://github.com/jbcodeforce/quarkus-event-driven-consumer-microservice-template
+nav:
+  - Introduction: index.md
+  - Build & Run: build-run.md
+  - DevOps: devops.md
+  - Tests: tests.md
+  - Quarkus summary: quarkus-summary.md
+  - Compendium: compendium.md
+
+theme: 
+  name: material
+extra_css: ["extra.css"]
+markdown_extensions:
+  - admonition
+  - codehilite
+  - footnotes
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
