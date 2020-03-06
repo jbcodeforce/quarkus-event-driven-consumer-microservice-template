@@ -21,3 +21,7 @@ See the [BOOK view](https://jbcodeforce.github.io/quarkus-event-driven-consumer-
 
 [CI/CD details](devops.md)
 
+## What to do next
+
+Add your own resource end points, and remove HelloResource class when you are done testing the basic deployment.
+

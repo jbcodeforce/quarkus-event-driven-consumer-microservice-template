@@ -1,9 +1,8 @@
-package ibm.gse.eda.tmp.infrastructure.kafka;
+package ibm.gse.eda.app.infrastructure.kafka;
 
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Properties;
-import java.util.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -14,6 +13,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.header.Header;
+import org.jboss.logging.Logger;
 
 import com.google.gson.Gson;
 
@@ -26,8 +26,10 @@ import ibm.gse.eda.app.infrastructure.events.OrderEvent;
  */
 @ApplicationScoped
 public class MainEventsRunner implements Runnable {
-	private static final Logger logger = Logger.getLogger(MainEventsRunner.class.getName());
 
+	private static final Logger LOGGER = Logger.getLogger(MainEventsRunner.class.getName()); 
+	
+	
 	private KafkaConsumer<String, String> kafkaConsumer = null;
 	private Gson jsonParser = new Gson();
 	private boolean running = true;
@@ -63,7 +65,7 @@ public class MainEventsRunner implements Runnable {
 	
 	@Override
 	public void run() {
-		logger.info("Order event consumer loop thread started");
+		LOGGER.info("Order event consumer loop thread started");
 		init();
 		while (this.running) {
 			try {
@@ -83,7 +85,7 @@ public class MainEventsRunner implements Runnable {
 			if (kafkaConsumer != null)
 				kafkaConsumer.close(KafkaConfiguration.CONSUMER_CLOSE_TIMEOUT);
         } catch (Exception e) {
-            logger.warning("Failed closing Consumer " +  e.getMessage());
+        	LOGGER.info("Failed closing Consumer " +  e.getMessage());
         }
 	}
 
@@ -103,11 +105,11 @@ public class MainEventsRunner implements Runnable {
         	Iterator<Header> h = record.headers().iterator();
         	while (h.hasNext()) {
         		Header header = h.next();
-        		logger.info(header.key() + " " + header.value());
+        		LOGGER.info(header.key() + " " + header.value());
         	}
         			
         	
-        	logger.info("Consumer Record - key:" + record.key() + " value:" + record.value() + " partition:" +
+        	LOGGER.info("Consumer Record - key:" + record.key() + " value:" + record.value() + " partition:" +
                     record.partition() + " offset:" + record.offset() +"\n");
         	OrderEvent event = deserialize(record.value());
             if (handle(event)) {
@@ -122,7 +124,7 @@ public class MainEventsRunner implements Runnable {
 	}
 	
 	private boolean handle(OrderEvent event) {
-		logger.info("Event to process with business logic: " + event.getPayload().getOrderID());
+		LOGGER.info("Event to process with business logic: " + event.getPayload().getOrderID());
 		// ADD Here business logic that could come time
 		return true;
 	}

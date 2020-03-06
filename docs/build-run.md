@@ -51,3 +51,13 @@ You can then execute your binary:
 ./target/quarkus-kafka-consumer-1.0.0-SNAPSHOT-runner
 ```
 
+## Deployment to openshift while developing
+
+```
+oc new-project eda-sandbox --display-name="EDA kafka play with quarkus"
+oc new-build quay.io/redhat/ubi-quarkus-native-runner --binary --name=eda-consumer -l app=eda-consumer
+oc start-build eda-consumer --from-file=target/quarkus-kafka-consumer-1.0.0-SNAPSHOT-runner --follow
+oc new-app eda-consumer
+oc expose service eda-consumer
+oc get routes
+```

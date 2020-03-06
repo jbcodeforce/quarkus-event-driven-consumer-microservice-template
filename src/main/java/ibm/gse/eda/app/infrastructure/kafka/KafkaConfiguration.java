@@ -1,9 +1,8 @@
-package ibm.gse.eda.tmp.infrastructure.kafka;
+package ibm.gse.eda.app.infrastructure.kafka;
 
 import java.time.Duration;
 import java.util.Map;
 import java.util.Properties;
-import java.util.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -14,6 +13,7 @@ import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 /**
  * Configuration leverage properties file and environment variables
@@ -23,7 +23,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  */
 @ApplicationScoped
 public class KafkaConfiguration {
-	private static final Logger logger = Logger.getLogger(KafkaConfiguration.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(KafkaConfiguration.class.getName()); 
+		
 	public static final long PRODUCER_TIMEOUT_SECS = 10;
 	public static final long PRODUCER_CLOSE_TIMEOUT_SEC = 10;
 	public static final Duration CONSUMER_POLL_TIMEOUT = Duration.ofSeconds(10);
@@ -32,11 +33,11 @@ public class KafkaConfiguration {
 
   
     @Inject 
-    @ConfigProperty(name = "mainTopicName")
+    @ConfigProperty(name = "main.topic.name")
     protected String mainTopicName;
 
     @Inject 
-    @ConfigProperty(name = "kafka-consumer-groupid")
+    @ConfigProperty(name = "kafka.consumer.groupid")
     protected String groupid;
     protected Map<String, String> env = System.getenv();
     
@@ -56,7 +57,7 @@ public class KafkaConfiguration {
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         properties.put(ConsumerConfig.CLIENT_ID_CONFIG, getClientId());
-        properties.forEach((k,v)  -> logger.info(k + " : " + v)); 
+        properties.forEach((k,v)  -> LOGGER.debug(k + " : " + v)); 
         return properties;
     }
     
@@ -94,22 +95,12 @@ public class KafkaConfiguration {
 
 	public String getMainTopicName() {
 		
-		if (mainTopicName == null) {
-			if (env.get("KAFKA_MAIN_TOPIC") != null) {
-				mainTopicName = env.get("KAFKA_MAIN_TOPIC");
-			} else {
-				mainTopicName = "orders";
-			}
-		}
 		return mainTopicName;
 	}
 	
 
 	
 	public String getConsumerGroupID() {
-		if (groupid == null) {
-			groupid = "order-ms-consumer-grp";
-		}
 		return groupid;
 	}
 	

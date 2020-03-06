@@ -12,7 +12,7 @@
 
 ## Cloud Native with Quarkus
 
-* [Quarkus guides]()
+* [Quarkus Getting started](https://quarkus.io/guides/getting-started)
 * [building native executables](https://quarkus.io/guides/building-native-image-guide)
 * [REST easy](https://resteasy.github.io/)
 * [SmallRYE](https://smallrye.io/) SmallRye develops implementations of Eclipse MicroProfile APIs within any runtime, but here it is for quarkus, and offers a set of components to develop cloud native Java apps.
