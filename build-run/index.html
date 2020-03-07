@@ -297,6 +297,61 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#deployment-to-openshift-while-developing" title="Deployment to openshift while developing" class="md-nav__link">
+    Deployment to openshift while developing
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#define-the-configuration-map" title="Define the configuration map" class="md-nav__link">
+    Define the configuration map
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-project" title="Create project" class="md-nav__link">
+    Create project
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-from-native-image" title="Build from native image" class="md-nav__link">
+    Build from native image
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-from-source" title="Build from source" class="md-nav__link">
+    Build from source
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#config-the-app-and-routes" title="Config the app and routes" class="md-nav__link">
+    Config the app and routes
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#next-pure-java-build" title="Next pure java build" class="md-nav__link">
+    Next pure java build
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
       
       
       
@@ -404,6 +459,61 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#deployment-to-openshift-while-developing" title="Deployment to openshift while developing" class="md-nav__link">
+    Deployment to openshift while developing
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#define-the-configuration-map" title="Define the configuration map" class="md-nav__link">
+    Define the configuration map
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-project" title="Create project" class="md-nav__link">
+    Create project
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-from-native-image" title="Build from native image" class="md-nav__link">
+    Build from native image
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-from-source" title="Build from source" class="md-nav__link">
+    Build from source
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#config-the-app-and-routes" title="Config the app and routes" class="md-nav__link">
+    Config the app and routes
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#next-pure-java-build" title="Next pure java build" class="md-nav__link">
+    Next pure java build
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
       
       
       
@@ -424,11 +534,16 @@
                 
                 
                 <h1 id="build-and-run-locally">Build and run locally</h1>
+<p>you can build a Quarkus application either as a standard Java application (using the docker build file: <code>src/main/docker/Dockerfile.jvm</code>)or as a native executable using GraalVM (and -Dnative) and the (<code>src/main/docker/Dockerfile.native</code>).</p>
 <h2 id="environment-variables-used">Environment variables used</h2>
 <ul>
 <li>KAFKA_BROKERS</li>
-<li>KAFKA_APIKEY</li>
+<li>KAFKA_APIKEY
+If the topic name is different that the one in the application.properties</li>
 <li>KAFKA_MAIN_TOPIC</li>
+</ul>
+<p>When connected to a Kafka cluster using TLS certificate add:</p>
+<ul>
 <li>TRUSTSTORE_ENABLED</li>
 <li>TRUSTSTORE_PATH</li>
 <li>TRUSTSTORE_PWD</li>
@@ -459,6 +574,48 @@ Be aware that it’s not an <em>über-jar</em> as the dependencies are copied in
 
 <p>You can then execute your binary: </p>
 <div class="codehilite"><pre><span></span>./target/quarkus-kafka-consumer-1.0.0-SNAPSHOT-runner
+</pre></div>
+
+<h2 id="deployment-to-openshift-while-developing">Deployment to openshift while developing</h2>
+<h3 id="define-the-configuration-map">Define the configuration map</h3>
+<h3 id="create-project">Create project</h3>
+<div class="codehilite"><pre><span></span>oc new-project eda-sandbox --display-name<span class="o">=</span><span class="s2">&quot;EDA kafka play with quarkus&quot;</span>
+</pre></div>
+
+<h3 id="build-from-native-image">Build from native image</h3>
+<p>Define a build configuration 
+<div class="codehilite"><pre><span></span>oc new-build quay.io/redhat/ubi-quarkus-native-runner --binary --name<span class="o">=</span>eda-orders-consumer-native -l <span class="nv">app</span><span class="o">=</span>eda-orders-consumer
+
+oc start-build eda-orders-consumer-native --from-file<span class="o">=</span>target/quarkus-kafka-consumer-1.0.0-SNAPSHOT-runner --follow
+</pre></div></p>
+<p>!!! Note:
+        The native image does not work as some of the SaslClient classes from Kafka API does not have a public no-argument constructor</p>
+<h3 id="build-from-source">Build from source</h3>
+<p>Define a pure java build process
+<div class="codehilite"><pre><span></span>oc new-build registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift --binary --name=eda-orders-consumer -l app=eda-orders-consumer
+
+./mvnw clean
+oc start-build eda-orders-consumer --from-file=. --follow
+</pre></div></p>
+<h3 id="config-the-app-and-routes">Config the app and routes</h3>
+<div class="codehilite"><pre><span></span><span class="c1"># the name of the application needs to match the app tag specified with the new build.</span>
+oc new-app eda-orders-consumer
+<span class="c1"># get the deployment configuration</span>
+oc get dc
+<span class="c1"># Add environment variables:</span>
+c <span class="nb">set</span> env dc/eda-orders-consumer <span class="nv">KAFKA_BROKERS</span><span class="o">=</span>broker-3-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-1-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-0-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-5-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-2-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-4-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093
+<span class="c1"># Add secret for the api key and reference it for environment variables</span>
+
+<span class="c1"># expose the service as route to be accessible to external apps</span>
+oc expose service eda-orders-consumer
+<span class="c1"># get apps URL</span>
+oc get routes
+<span class="c1"># verify the access</span>
+curl eda-orders-consumer-jb-sandbox.gse-eda-demos-...-0001.us-east.containers.appdomain.cloud/hello
+</pre></div>
+
+<h3 id="next-pure-java-build">Next pure java build</h3>
+<div class="codehilite"><pre><span></span>oc start-build eda-orders-consumer --from-file<span class="o">=</span>. --follow
 </pre></div>
                 
                   

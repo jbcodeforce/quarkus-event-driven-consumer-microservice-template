@@ -313,8 +313,36 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#run-development-mode" title="Run development mode" class="md-nav__link">
+    Run development mode
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#using-graalvm" title="Using GraalVM" class="md-nav__link">
     Using GraalVM
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#microprofile-app-with-quarkus" title="Microprofile app with quarkus" class="md-nav__link">
+    Microprofile app with quarkus
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#application-initialization" title="Application initialization" class="md-nav__link">
+    Application initialization
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cdi" title="CDI" class="md-nav__link">
+    CDI
   </a>
   
 </li>
@@ -377,8 +405,36 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#run-development-mode" title="Run development mode" class="md-nav__link">
+    Run development mode
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#using-graalvm" title="Using GraalVM" class="md-nav__link">
     Using GraalVM
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#microprofile-app-with-quarkus" title="Microprofile app with quarkus" class="md-nav__link">
+    Microprofile app with quarkus
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#application-initialization" title="Application initialization" class="md-nav__link">
+    Application initialization
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cdi" title="CDI" class="md-nav__link">
+    CDI
   </a>
   
 </li>
@@ -410,24 +466,80 @@
                 
                 
                 <h1 id="quarkus-summary">Quarkus Summary</h1>
-<p><a href="https://quarkus.io/">Quarkus</a> is a Kubernetes Native Java stack tailored for OpenJDK HotSpot and GraalVM</p>
+<p><a href="https://quarkus.io/">Quarkus</a> is a Kubernetes Native Java stack tailored for OpenJDK HotSpot and GraalVM.</p>
 <h2 id="create-a-template">Create a template</h2>
 <p>Using <a href="https://code.quarkus.io/">this web site</a>, select the package and download.</p>
+<h2 id="run-development-mode">Run development mode</h2>
+<p><code>quarkus:dev</code> runs Quarkus in development mode. This enables hot deployment with background compilation, which means that when you modify your Java files and/or your resource files and refresh your browser, these changes will automatically take effect.</p>
 <h2 id="using-graalvm">Using GraalVM</h2>
+<p>You can use a multi-stage Docker build to run Maven inside a Docker container that embeds GraalVM. </p>
 <p>Start a container and verify <code>java -version</code> or <code>node</code>.</p>
-<div class="codehilite"><pre><span></span>docker run -it -v <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/home oracle/graalvm-ce:20.0.0 bash
+<div class="codehilite"><pre><span></span>docker run -it -v <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/home -p <span class="m">8080</span>:8080 oracle/graalvm-ce:20.0.0 bash
 </pre></div>
 
 <p>See <a href="https://www.graalvm.org/docs/getting-started/#docker-containers">other usages here</a></p>
-<p>For python:</p>
+<p>For python, in the bash session in the graalvm container:</p>
 <div class="codehilite"><pre><span></span>gu install python
 graalpython
 </pre></div>
 
 <p>GraalVM can compile Java bytecode into native images to achieve faster startup and smaller footprint for your applications. </p>
-<div class="codehilite"><pre><span></span>$ javac HelloWorld.java
-$ native-image HelloWorld
-$ ./HelloWorld
+<div class="codehilite"><pre><span></span>javac HelloWorld.java
+native-image HelloWorld
+./HelloWorld
+</pre></div>
+
+<p>When using maven in the container, the internal maven repository will be update when doing <code>mvn package</code>. We can do a <code>docker commit &lt;containerid&gt; jbcodeforce/newgraalvm</code> to keep those installation between container sessions, and use this image for future runs.</p>
+<p>One of the limitations of GraalVM is the usage of Reflection. Reflective operations are supported but all relevant members must be registered for reflection explicitly.</p>
+<h2 id="microprofile-app-with-quarkus">Microprofile app with quarkus</h2>
+<p>Start by creating a microprofile base code with <a href="https://start.microprofile.io/">Microprofile starter</a>.</p>
+<p>Replace the "starter" maven <code>pom.xml</code> file with a new one, created for Quarkus with the following command (verify quarkus maven plugin version <a href="https://mvnrepository.com/artifact/io.quarkus/quarkus-maven-plugin">in mvn repository</a>):</p>
+<div class="codehilite"><pre><span></span>mvn io.quarkus:quarkus-maven-plugin:1.2.1.Final:create -DprojectGroupId<span class="o">=</span>ibm.gse.eda -DprojectArtifactId<span class="o">=</span>demo -Dextensions<span class="o">=</span><span class="s2">&quot;smallrye-health, smallrye-metrics, smallrye-openapi, smallrye-fault-tolerance, smallrye-jwt, resteasy, resteasy-jsonb, arc&quot;</span>
+</pre></div>
+
+<h2 id="application-initialization">Application initialization</h2>
+<p>As part of the consumer implementation, is the need to start the consumer as soon as the application is started. Quarkus support two events: <code>StartupEvent, ShutdownEvent</code> that can be processed:</p>
+<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="nf">onStart</span><span class="o">(</span><span class="nd">@Observes</span> <span class="n">StartupEvent</span> <span class="n">ev</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;The application is starting...&quot;</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kt">void</span> <span class="nf">onStop</span><span class="o">(</span><span class="nd">@Observes</span> <span class="n">ShutdownEvent</span> <span class="n">ev</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;The application is stopping...&quot;</span><span class="o">);</span>
+    <span class="o">}</span>
+</pre></div>
+
+<h2 id="cdi">CDI</h2>
+<p>CDI is supported by ArC and is part of the <code>quarkus-resteasy</code> extension. Variable injection is done with <code>@Inject</code> and <code>@ConfigProperties</code>. The order is properties &lt; System.getEnv()  &lt; System.getProperties()</p>
+<div class="codehilite"><pre><span></span><span class="nd">@Inject</span> 
+<span class="nd">@ConfigProperty</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;main.topic.name&quot;</span><span class="o">)</span>
+<span class="kd">protected</span> <span class="n">String</span> <span class="n">mainTopicName</span><span class="o">;</span>
+</pre></div>
+
+<p>Bean classes that don’t have a bean defining annotation are not discovered. This behavior is defined by CDI. But producer methods and fields and observer methods are discovered even if the declaring class is not annotated with a bean defining annotation</p>
+<p>By default, CDI beans are created lazily, when needed.</p>
+<ul>
+<li>A normal scoped bean (@ApplicationScoped, @RequestScoped, etc.) is needed when a method is invoked upon an injected instance (contextual reference per the specification).</li>
+<li>A bean with a pseudo-scope (@Dependent and @Singleton ) is created when injected</li>
+</ul>
+<p>In CDI event Singleton injection may not work as expected due to the propagation of the application context. For example in the case where we need to run the kafka consumer in an executor, we need to pass the configuration to the runner so it get the value injected in the properties, as those value are created in the application context, and will be null in the thread context. </p>
+<p>The configuration is injected into the runner in the application Bean</p>
+<div class="codehilite"><pre><span></span><span class="nd">@ApplicationScoped</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">ApplicationBean</span> <span class="o">{</span>
+    <span class="nd">@Inject</span>
+    <span class="kd">public</span> <span class="n">KafkaConfiguration</span> <span class="n">kafkaConfiguration</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onStart</span><span class="o">(</span><span class="nd">@Observes</span> <span class="n">StartupEvent</span> <span class="n">ev</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">executorService</span> <span class="o">=</span> <span class="n">Executors</span><span class="o">.</span><span class="na">newFixedThreadPool</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+        <span class="n">mainEventRunner</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MainEventsRunner</span><span class="o">(</span><span class="n">kafkaConfiguration</span><span class="o">);</span>
+</pre></div>
+
+<div class="codehilite"><pre><span></span><span class="nd">@ApplicationScoped</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">MainEventsRunner</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{}</span>
+    <span class="kd">public</span> <span class="n">KafkaConfiguration</span> <span class="n">kafkaConfiguration</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">MainEventsRunner</span><span class="o">(</span><span class="n">KafkaConfiguration</span> <span class="n">kafkaConfiguration</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">kafkaConfiguration</span> <span class="o">=</span> <span class="n">kafkaConfiguration</span><span class="o">;</span>
+    <span class="o">}</span>
 </pre></div>
 
 <h2 id="quick-list-of-common-commands">Quick list of common commands</h2>
