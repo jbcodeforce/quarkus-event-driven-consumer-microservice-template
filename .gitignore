@@ -1,5 +1,6 @@
 # Eclipse
 .project
+testLocal.sh
 .classpath
 .settings/
 bin/

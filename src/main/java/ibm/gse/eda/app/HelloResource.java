@@ -12,10 +12,11 @@ import org.jboss.logging.Logger;
 @Path("/hello")
 public class HelloResource {
 	
-	 private static final Logger LOGGER = Logger.getLogger("HelloResource"); 
+	protected static final Logger LOGGER = Logger.getLogger("HelloResource"); 
+	
 	@Inject
 	@ConfigProperty(name="message")
-	private String message;
+	protected String message;
 
     @GET
     @Produces(MediaType.TEXT_PLAIN)

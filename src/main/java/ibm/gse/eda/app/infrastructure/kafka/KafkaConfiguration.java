@@ -4,8 +4,8 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Properties;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import javax.enterprise.event.Observes;
+import javax.inject.Singleton;
 
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -15,13 +15,15 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
+import io.quarkus.runtime.StartupEvent;
+
 /**
  * Configuration leverage properties file and environment variables
  * 
  * @author jeromeboyer
  *
  */
-@ApplicationScoped
+@Singleton
 public class KafkaConfiguration {
 	private static final Logger LOGGER = Logger.getLogger(KafkaConfiguration.class.getName()); 
 		
@@ -32,32 +34,38 @@ public class KafkaConfiguration {
     public static final long TERMINATION_TIMEOUT_SEC = 10;
 
   
-    @Inject 
-    @ConfigProperty(name = "main.topic.name")
+    @ConfigProperty(name = "main.topic.name", defaultValue="orders")
     protected String mainTopicName;
-
-    @Inject 
-    @ConfigProperty(name = "kafka.consumer.groupid")
+ 
+    @ConfigProperty(name = "kafka.consumer.groupid", defaultValue="order.consumer.id")
     protected String groupid;
+    
     protected Map<String, String> env = System.getenv();
     
-	private String clientId;
+    protected String clientId;
     
     public KafkaConfiguration() {}
     
+    // To create this bean at startup by listening to startup event
+    /*
+    void startup(@Observes StartupEvent event) { 
+    	getMainTopicName();
+    	getConsumerGroupID();
+    }
+    */
     
     public Properties getConsumerProperties(
     		String clientid, 
     		boolean commit,
     		String offset) {
         Properties properties = buildCommonProperties();
-        properties.put(ConsumerConfig.GROUP_ID_CONFIG,  getConsumerGroupID());
         properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, Boolean.toString(commit));
+        properties.put(ConsumerConfig.GROUP_ID_CONFIG,  this.getConsumerGroupID());
         properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, offset);
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         properties.put(ConsumerConfig.CLIENT_ID_CONFIG, getClientId());
-        properties.forEach((k,v)  -> LOGGER.debug(k + " : " + v)); 
+        properties.forEach((k,v)  -> LOGGER.info(k + " : " + v)); 
         return properties;
     }
     
@@ -94,13 +102,14 @@ public class KafkaConfiguration {
     }
 
 	public String getMainTopicName() {
-		
+		LOGGER.info(mainTopicName);
 		return mainTopicName;
 	}
 	
 
 	
 	public String getConsumerGroupID() {
+		LOGGER.info(groupid);
 		return groupid;
 	}
 	

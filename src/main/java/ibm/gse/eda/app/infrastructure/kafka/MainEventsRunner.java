@@ -30,15 +30,20 @@ public class MainEventsRunner implements Runnable {
 	private static final Logger LOGGER = Logger.getLogger(MainEventsRunner.class.getName()); 
 	
 	
-	private KafkaConsumer<String, String> kafkaConsumer = null;
+	protected KafkaConsumer<String, String> kafkaConsumer = null;
 	private Gson jsonParser = new Gson();
 	private boolean running = true;
 	
-	@Inject
-	private KafkaConfiguration kafkaConfiguration;
+	
+	public KafkaConfiguration kafkaConfiguration;
 	
 	public MainEventsRunner() {
     }
+	
+	public MainEventsRunner(KafkaConfiguration kafkaConfiguration) {
+		this.kafkaConfiguration = kafkaConfiguration;
+    }
+	
     
     public MainEventsRunner(KafkaConsumer<String, String> kafkaConsumer) {
     	this.kafkaConsumer = kafkaConsumer;
@@ -52,16 +57,20 @@ public class MainEventsRunner implements Runnable {
     private void init() {
     	// if we need to have multiple threads then the clientId needs to be different
     	// auto commit is set to true, and read from the last not committed offset
-    	Properties properties = kafkaConfiguration.getConsumerProperties(
+    	Properties properties = getKafkaConfiguration().getConsumerProperties(
           		"OrderEventsAgent",	
           		false,  
           		"earliest" );
     	// ADD any properties on top of the default ones here
     	properties.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 10);
         this.kafkaConsumer = new KafkaConsumer<String, String>(properties);
-    	this.kafkaConsumer.subscribe(Collections.singletonList(kafkaConfiguration.getMainTopicName()));
+    	this.kafkaConsumer.subscribe(Collections.singletonList(getKafkaConfiguration().getMainTopicName()));
     }
     
+    public KafkaConfiguration getKafkaConfiguration() {
+    	if (kafkaConfiguration == null) kafkaConfiguration = new KafkaConfiguration();
+    	return kafkaConfiguration;
+    }
 	
 	@Override
 	public void run() {
@@ -120,10 +129,17 @@ public class MainEventsRunner implements Runnable {
 	}
 	
 	private OrderEvent deserialize(String eventAsString) {
-		return jsonParser.fromJson(eventAsString, OrderEvent.class);
+		OrderEvent oe= null;
+		try {
+			oe = jsonParser.fromJson(eventAsString, OrderEvent.class);
+		} catch (Exception e) {
+			// if the message is not serializable hidde the exception return null
+		}
+		return oe;
 	}
 	
 	private boolean handle(OrderEvent event) {
+		if (event == null) return false;
 		LOGGER.info("Event to process with business logic: " + event.getPayload().getOrderID());
 		// ADD Here business logic that could come time
 		return true;

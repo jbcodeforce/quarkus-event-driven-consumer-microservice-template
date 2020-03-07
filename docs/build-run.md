@@ -1,10 +1,16 @@
 # Build and run locally
 
+you can build a Quarkus application either as a standard Java application (using the docker build file: `src/main/docker/Dockerfile.jvm`)or as a native executable using GraalVM (and -Dnative) and the (`src/main/docker/Dockerfile.native`).
+
 ## Environment variables used
 
 * KAFKA_BROKERS
 * KAFKA_APIKEY
+If the topic name is different that the one in the application.properties
 * KAFKA_MAIN_TOPIC
+
+When connected to a Kafka cluster using TLS certificate add:
+
 * TRUSTSTORE_ENABLED
 * TRUSTSTORE_PATH
 * TRUSTSTORE_PWD
@@ -53,11 +59,57 @@ You can then execute your binary:
 
 ## Deployment to openshift while developing
 
-```
+### Define the configuration map
+
+### Create project
+
+```shell
 oc new-project eda-sandbox --display-name="EDA kafka play with quarkus"
-oc new-build quay.io/redhat/ubi-quarkus-native-runner --binary --name=eda-consumer -l app=eda-consumer
-oc start-build eda-consumer --from-file=target/quarkus-kafka-consumer-1.0.0-SNAPSHOT-runner --follow
-oc new-app eda-consumer
-oc expose service eda-consumer
+```
+
+### Build from native image
+
+Define a build configuration 
+```shell
+oc new-build quay.io/redhat/ubi-quarkus-native-runner --binary --name=eda-orders-consumer-native -l app=eda-orders-consumer
+
+oc start-build eda-orders-consumer-native --from-file=target/quarkus-kafka-consumer-1.0.0-SNAPSHOT-runner --follow
+```
+
+!!! Note:
+        The native image does not work as some of the SaslClient classes from Kafka API does not have a public no-argument constructor
+
+### Build from source
+
+Define a pure java build process
+```
+oc new-build registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift --binary --name=eda-orders-consumer -l app=eda-orders-consumer
+
+./mvnw clean
+oc start-build eda-orders-consumer --from-file=. --follow
+```
+
+### Config the app and routes
+
+```shell
+# the name of the application needs to match the app tag specified with the new build.
+oc new-app eda-orders-consumer
+# get the deployment configuration
+oc get dc
+# Add environment variables:
+c set env dc/eda-orders-consumer KAFKA_BROKERS=broker-3-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-1-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-0-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-5-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-2-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-4-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093
+# Add secret for the api key and reference it for environment variables
+
+# expose the service as route to be accessible to external apps
+oc expose service eda-orders-consumer
+# get apps URL
 oc get routes
+# verify the access
+curl eda-orders-consumer-jb-sandbox.gse-eda-demos-...-0001.us-east.containers.appdomain.cloud/hello
+```
+
+### Next pure java build 
+
+```shell
+oc start-build eda-orders-consumer --from-file=. --follow
 ```

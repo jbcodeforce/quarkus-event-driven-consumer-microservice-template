@@ -38,25 +38,31 @@ public class ApplicationBean {
 	   @ConfigProperty(name="app.version")
 	   String version;
 	   
+	   @Inject
+	   public KafkaConfiguration kafkaConfiguration;
+	   
 	   private MainEventsRunner mainEventRunner;
 	    
-	   private ExecutorService executor;
+	   private ExecutorService executorService;
 
-	    void onStart(@Observes StartupEvent ev) {               
+	   public void onStart(@Observes StartupEvent ev) {               
 	    	LOGGER.info("The application v" + version + " is starting...");
-	        executor = Executors.newFixedThreadPool(2);
-	        mainEventRunner = new MainEventsRunner();
+	    	// With ExecutorService we can start a kafka consumer thread,
+	        // but we need to inject configuration data instantiated by the main thread into
+	    	// the new thread 
+	        executorService = Executors.newFixedThreadPool(1);
+	        mainEventRunner = new MainEventsRunner(kafkaConfiguration);
 	        // ADD here any other consumer runner 
-	        executor.execute(mainEventRunner);
+	        executorService.execute(mainEventRunner);
 	    }
 
-	    void onStop(@Observes ShutdownEvent ev) {               
+	    public void onStop(@Observes ShutdownEvent ev) {               
 	    	LOGGER.info("The application is stopping...");
 	    	mainEventRunner.stop();
 	        // ADD here any runner.stop() call to nicely close consumers
-	        executor.shutdownNow();
+	        executorService.shutdownNow();
 	        try {
-	            executor.awaitTermination(KafkaConfiguration.TERMINATION_TIMEOUT_SEC, TimeUnit.SECONDS);
+	            executorService.awaitTermination(KafkaConfiguration.TERMINATION_TIMEOUT_SEC, TimeUnit.SECONDS);
 	        } catch (InterruptedException ie) {
 	        	LOGGER.warn("awaitTermination( interrupted", ie);
 	        }
