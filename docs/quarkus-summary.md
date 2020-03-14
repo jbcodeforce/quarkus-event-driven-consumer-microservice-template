@@ -113,3 +113,8 @@ public class MainEventsRunner implements Runnable {}
 ## Quick list of common commands
 
 See also this [Cheat sheer](https://lordofthejars.github.io/quarkus-cheat-sheet/#quarkuscheatsheet)
+
+## Reading or viewing
+
+* [Visual Studio Quarkus extension video](https://www.youtube.com/watch?v=S3X2GMWcf_Q&pbjreload=10)
+* [QUARKUS - TIPS FOR WRITING NATIVE APPLICATIONS](https://quarkus.io/guides/writing-native-applications-tips)

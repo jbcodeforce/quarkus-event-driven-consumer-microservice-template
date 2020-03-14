@@ -11,15 +11,15 @@ See the [BOOK view](https://jbcodeforce.github.io/quarkus-event-driven-consumer-
 
 ## Running the application in dev mode
 
-[Detail in this note.](build-run.md)
+[Detail in this note.](https://jbcodeforce.github.io/quarkus-event-driven-consumer-microservice-template/build-run)
 
 ## Tests 
 
-[Detail in this note.](tests.md)
+[Detail in this note.](https://jbcodeforce.github.io/quarkus-event-driven-consumer-microservice-template/tests)
 
 ## Deployment on Openshift
 
-[CI/CD details](devops.md)
+[CI/CD details](https://jbcodeforce.github.io/quarkus-event-driven-consumer-microservice-template/devops)
 
 ## What to do next
 

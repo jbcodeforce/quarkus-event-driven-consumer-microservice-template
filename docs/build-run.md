@@ -98,7 +98,7 @@ oc new-app eda-orders-consumer
 oc get dc
 # Add environment variables:
 c set env dc/eda-orders-consumer KAFKA_BROKERS=broker-3-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-1-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-0-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-5-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-2-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-4-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093
-# Add secret for the api key and reference it for environment variables
+# Add secret for the api key and reference this secret in environment variable
 
 # expose the service as route to be accessible to external apps
 oc expose service eda-orders-consumer
